@@ -1,4 +1,4 @@
-# public_holidays
+# Public Holidays
 
 A new Flutter project.
 
