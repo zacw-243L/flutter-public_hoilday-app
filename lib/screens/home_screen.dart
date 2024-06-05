@@ -13,11 +13,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  Future<PublicHoliday> fetchHolidays(String country, int year) async {
+  Future<List<PublicHoliday>> fetchHolidays(int year, String country) async {
     const baseURL = 'https://public-holiday.p.rapidapi.com';
-
     Map<String, String> requestHeaders = {
-      'X-RapidAPI-Key': 'YOUR-API-KEY',
+      'X-RapidAPI-Key': '',
       'X-RapidAPI-Host': 'public-holiday.p.rapidapi.com'
     };
 
@@ -27,11 +26,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     if (response.statusCode == 200) {
-      var jsonObj = jsonDecode(response.body)[0];
-      PublicHoliday holiday = PublicHoliday.fromJson(jsonObj);
-      return holiday;
+      //convert array of JSON objects to List<dynamic>
+      List<dynamic> jsonList = jsonDecode(response.body) as List<dynamic>;
+      //convert List<dynamic> to List<PublicHoliday>
+      List<PublicHoliday> holidays =
+          jsonList.map((json) => PublicHoliday.fromJson(json)).toList();
+      return holidays;
     } else {
-      throw Exception('Failed to load');
+      throw Exception('Failed to load news');
     }
   }
 
@@ -39,11 +41,20 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: FutureBuilder(
-          future: null,
+        child: FutureBuilder<List<PublicHoliday>>(
+          future: fetchHolidays(2024, 'SG'),
           builder: (context, snapshot) {
             if (snapshot.hasData) {
-              return Container();
+              return ListView.builder(
+                itemCount: snapshot.data!.length,
+                itemBuilder: (context, index) {
+                  PublicHoliday publicHoliday = snapshot.data![index];
+                  return ListTile(
+                    title: Text(publicHoliday.name),
+                    subtitle: Text(publicHoliday.date),
+                  );
+                },
+              );
             } else if (snapshot.hasError) {
               return Text('${snapshot.error}');
             }
